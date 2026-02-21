@@ -400,3 +400,9 @@ ggplot(bmi_predicted2, aes(x = PM_BMI_SR, y = .pred)) +
 
 Comparing the model performance (model with all components (model 1) vs model with only three components (model 2)) on testing data, both model perform poorly. However, the data points from model 1 graph (predicted vs measured) are more close to the line than the model 2 graph, which is expected given that model 1 contains all the components. The next approach of mine would be to use different component choosing methods present in the literature and then fit the model based on the decision of those methods and compare them to see which model performs better.
 
+# Limitations:
+1. For the sake of assignments, I randomly choosed anthropometric and diet variables which may not be correlated as evident from the correlation analysis. In reality, the variables put in the PCA have issues of multicollinearity or they are related to each other.
+2. Parallel analysis is a more robust method to choose components for PCA, however I didn't use that approach.
+3. Regression models were compared solely based on their performance on testing dataset. In reality, a more detailed evaluation of the linear model is needed, along with the assumption testing to see which model is the best model. This is not done in this assignment.
+4. The components due to lack of relationship between some of the variables are not interpretable.
+
