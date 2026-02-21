@@ -333,7 +333,7 @@ bmi_fit_extract <- bmi_fit %>%
 bmi_fit_extract
 ```
 
-All the principal components are negatively associated with BMI (dependent variable), except the component 4 which is positively associated. Gender and income are also negatively associated with the dependent variables, whereas smoking is positively associated.
+
 
 ## Prediction on testing data
 
