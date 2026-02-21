@@ -5,6 +5,8 @@ date: "2026-02-20"
 output: html_document
 ---
 
+# Repositories link
+https://github.com/harsimranghai91-eng/Principal-Component-Analysis-CHEP-898.git
 
 # Installing the libraries
 
