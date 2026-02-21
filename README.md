@@ -5,6 +5,6 @@
  3. PCA analysis was conducted and factors were interpreted according to the loading of variables on the components.
  4. Number of factors were selected using the kaiser criterion based on the scree plot
  5. Two model were created, model 1 with all the principals component and extracted categorical variables and the second model with only the components selected based on the kaiser criterion.
- 6. Models were compared based on their performance (graphs) on testing dataset.
+ 6. Models were compared based on their performance (graphically) on testing dataset.
  7. Future direction were given
  

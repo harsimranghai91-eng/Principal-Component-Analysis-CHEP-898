@@ -74,7 +74,7 @@ str(data)
 # Extracting the variables for PCA and PCA regression
 
 ```{r}
-data2<-data|>select(ID, 
+data2 <- data|>select(ID, 
                        PM_BMI_SR,
                        PA_TOTAL_SHORT,
                        PA_TOTAL_SIT_TIME,
@@ -98,9 +98,9 @@ data2<-data|>select(ID,
                        PA_SIT_AVG_TIME_DAY)
 
 #converting variables into factors
-data2$SDC_GENDER<-as.factor(data2$SDC_GENDER)
-data2$SDC_INCOME<-as.factor(data2$SDC_INCOME)
-data2$SMK_CIG_STATUS<-as.factor(data2$SMK_CIG_STATUS)
+data2$SDC_GENDER <- as.factor(data2$SDC_GENDER)
+data2$SDC_INCOME <- as.factor(data2$SDC_INCOME)
+data2$SMK_CIG_STATUS <- as.factor(data2$SMK_CIG_STATUS)
 ```
 
 Given PCA can only work for continuous variables, we will be extracting the continuous variables for PCA, however given that regression can handle categorical variables, we will also be extracting some of categorical variables to do the later analysis.
@@ -213,7 +213,7 @@ ggplot(pca_variables) +
   theme_minimal()
 ```
 
-The interpretation of some of the components are as follows based on the loading value of each variables on the prinicipal component. We used the criteria of loading greater than 0.2 and less than -0.2 to interpret the factors. The first factors based on the loading can be interpreted as physical activity and anthropometry, the second variable being anthropometry and the third variable maybe can be interpreted as sedentary lifestyle. Overall, given the lack of relationship evident from the correlation analysis, it is hard to interpret the factors.
+The interpretation of some of the components are as follows based on the loading value of each variables on the principal component. We used the criteria of loading greater than 0.2 and less than -0.2 to interpret the factors. The first factors based on the loading can be interpreted as physical activity and anthropometric variables, the second variable being anthropometric and the third variable maybe can be interpreted as sedentary lifestyle. Overall, given the lack of relationship evident from the correlation analysis, it is hard to interpret the factors.
 
 ## Variance explained by principal components
 
@@ -247,7 +247,7 @@ ggplot(pca_cummul_variance, aes(x = component, y = value, group = 1, color = com
   theme_minimal()
 ```
 
-The three component explain approximately 49 % of the variance in the dataset, which is not good, but for the sake of the practice, I will continue with the analysis.
+The three component explain approximately 49 % of the variance in the data set, which is not good, but for the sake of the practice, I will continue with the analysis.
 
 ## Relationship between the components
 
@@ -268,7 +268,7 @@ As expected, none of the components are correlated with each other, showing that
 
 # Regression analysis with PCA Components
 
-The initial analysis will be done without choosing the component. I believe R automatically choose the first five components for the analysis. After this, regression would be conducted with only three components and then the model will be compared based on their performance on the testing datasets.
+The initial regression analysis will be done without choosing the component. After that, regression would be conducted with only three components and then the model will be compared based on their performance on the testing dataset (only graphically).
 
 ## Setting the seed and Splitting the data for training and testing the model
 
@@ -333,7 +333,7 @@ bmi_fit_extract
 
 All the principal components are negatively associated with BMI (dependent variable), except the component 4 which is positively associated. Gender and income are also negatively associated with the dependent variables, whereas smoking is positively associated.
 
-## Predict on new data
+## Prediction on testing data
 
 ```{r}
 bmi_predicted <- augment(bmi_fit, test_data)
@@ -384,7 +384,7 @@ bmi_fit_extract2 <- bmi_fit2 %>%
 bmi_fit_extract2
 ```
 
-## Predict on new data
+## Prediction on testing data
 
 ```{r}
 bmi_predicted2 <- augment(bmi_fit2, test_data)
@@ -396,5 +396,5 @@ ggplot(bmi_predicted2, aes(x = PM_BMI_SR, y = .pred)) +
   theme_minimal()
 ```
 
-Comparing the model performance (model with all components (model 1) vs model with only three components (model 2)) on testing data, both model perform poorly. However, the datapoints from model 1 graph (predicted vs measured) are more close to the line than the model 2 graph, which is expected given that model 1 contains all the components. The next approach of mine would be to use different component choosing methods present in the literature and then fit the model based on the decision of those methods and compare them to see which model performs better.
+Comparing the model performance (model with all components (model 1) vs model with only three components (model 2)) on testing data, both model perform poorly. However, the data points from model 1 graph (predicted vs measured) are more close to the line than the model 2 graph, which is expected given that model 1 contains all the components. The next approach of mine would be to use different component choosing methods present in the literature and then fit the model based on the decision of those methods and compare them to see which model performs better.
 
