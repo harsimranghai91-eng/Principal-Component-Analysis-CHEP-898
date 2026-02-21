@@ -1,0 +1,400 @@
+---
+title: "PCA"
+author: "Harsimran Ghai"
+date: "2026-02-20"
+output: html_document
+---
+
+
+# Installing the libraries
+
+```{r}
+install.packages("forestmodel",repos = "https://cloud.r-project.org")
+```
+
+# loading the libraries and importing the data
+
+```{r setup}
+library(tidyverse)
+library(tidymodels)
+library(reportRmd)
+library(sjPlot)
+library(plotly)
+library(psych)
+library(parallel)
+library(finalfit)
+library(gtsummary)
+library(mlbench)
+library(vip)
+library(rsample)
+library(tune)
+library(recipes)
+library(yardstick)
+library(parsnip)
+library(glmnet)
+library(themis)
+library(corrr)
+library(performance)
+library(utils)
+library(see)
+library(forestmodel)
+data<-read.csv("can_path_data.csv")
+```
+
+# Taking a look into the data
+
+```{r}
+glimpse(data)
+```
+
+There are total of 440 variables, with total sample size of 41,187.
+
+# Checking duplicated data
+
+```{r}
+duplicated(data)
+```
+
+No duplicated data was found in any of the variables list in this dataset.
+
+# Checking the missing values in the dataset
+
+```{r}
+colSums(is.na(data))
+```
+
+From eyeballing the results, it is apparent that all variables except few have missing values, which can be troublesome, as PCA being an unsupervised machine learning method is sensitive to missing values. Therefore, moving forward data will be clean and all the missing values will be drop to do a complete case analysis. 
+
+# Checking the structure of the dataset
+
+```{r}
+str(data)
+```
+
+# Extracting the variables for PCA and PCA regression
+
+```{r}
+data2<-data|>select(ID, 
+                       PM_BMI_SR,
+                       PA_TOTAL_SHORT,
+                       PA_TOTAL_SIT_TIME,
+                       PA_TOTAL_WALK_SHORT,
+                       PA_TOTAL_MOD_SHORT,
+                       PA_TOTAL_SHORT,
+                       PA_SIT_TIME_WKDAY,
+                       PM_STAND_HEIGHT_SR_AVG,
+                       PM_WEIGHT_SR_AVG,
+                       PM_WAIST_SR_AVG,
+                       PM_WAIST_HIP_RATIO_SR,
+                       PM_HIP_SR_AVG,
+                       NUT_VEG_QTY,
+                       NUT_FRUITS_QTY,
+                       NUT_JUICE_QTY,
+                       SDC_GENDER,
+                       SDC_INCOME,
+                       SMK_CIG_STATUS,
+                       DIS_ARTHRITIS_AGE,
+                       PA_WALK_TIME,
+                       PA_SIT_AVG_TIME_DAY)
+
+#converting variables into factors
+data2$SDC_GENDER<-as.factor(data2$SDC_GENDER)
+data2$SDC_INCOME<-as.factor(data2$SDC_INCOME)
+data2$SMK_CIG_STATUS<-as.factor(data2$SMK_CIG_STATUS)
+```
+
+Given PCA can only work for continuous variables, we will be extracting the continuous variables for PCA, however given that regression can handle categorical variables, we will also be extracting some of categorical variables to do the later analysis.
+
+# Summary of the continuous variables
+
+```{r}
+rm_covsum(data=data2, 
+covs=c('PM_BMI_SR',
+       'PA_TOTAL_SHORT',
+                       'PA_TOTAL_SIT_TIME',
+                       'PA_TOTAL_WALK_SHORT',
+                       'PA_TOTAL_MOD_SHORT',
+                       'PA_TOTAL_SHORT',
+                       'PA_SIT_TIME_WKDAY',
+                       'PM_STAND_HEIGHT_SR_AVG',
+                       'PM_WEIGHT_SR_AVG',
+                       'PM_WAIST_SR_AVG',
+                       'PM_WAIST_HIP_RATIO_SR',
+                       'PM_HIP_SR_AVG',
+                       'NUT_VEG_QTY',
+                       'NUT_FRUITS_QTY',
+                       'NUT_JUICE_QTY',
+                       'DIS_ARTHRITIS_AGE',
+                        'PA_WALK_TIME',
+                       'PA_SIT_AVG_TIME_DAY'))
+```
+
+# Data Cleaning
+
+The following variables are recoded as they tend to have extreme values.
+
+```{r}
+#Changing the variables
+data3 <- data2%>%mutate(DIS_ARTHRITIS_AGE = if_else(DIS_ARTHRITIS_AGE < 0, NA_real_, DIS_ARTHRITIS_AGE))
+
+#changing the extreme values to 360
+data3 <- data2%>%mutate(PA_SIT_AVG_TIME_DAY=case_when(
+            PA_SIT_AVG_TIME_DAY > 360 ~ 360,
+            TRUE ~ PA_SIT_AVG_TIME_DAY))
+
+#removing the missing variables
+data_final <- drop_na(data3)
+```
+
+# Summary of final and clean dataset
+
+```{r}
+glimpse(data_final)
+```
+
+This dataset contains 21 variables and a total of 11,840 observations.Therefore, a large chunk of data was removed due to their missingnesss.
+
+# Correlation Analysis
+
+```{r}
+data_final %>% 
+  correlate() %>%
+  rearrange() %>%
+  shave()  %>%
+  rplot(print_cor=TRUE)
+```
+
+Some variables according to the correlation analysis has moderate to strong positive correlation, while other has very weak correlation. For the sake of practice, I am continuing with the PCA, however given the lack of correlation between some of the variables, ideally we should only include variables that are related as we want to use the relationship among the variables to reduce the dimension of the dataset.
+
+# Conducting the PCA
+
+## Creating the recipe
+ 
+```{r}
+pca_recipe <- recipe(~., data = data_final) %>%
+  update_role(ID,
+              SDC_GENDER,
+              SDC_INCOME,
+              SMK_CIG_STATUS, new_role = "id") %>%
+  step_scale(all_predictors()) %>%
+  step_center(all_predictors()) %>%
+  step_pca(all_predictors(), id = "pca_id")
+
+pca_recipe
+```
+
+## Prepare
+
+```{r}
+pca_prepared <- prep(pca_recipe)
+
+pca_prepared
+```
+
+## Baking
+
+```{r}
+pca_baked <- bake(pca_prepared, data_final)
+pca_baked
+```
+
+## Components loadings and Graphs
+
+```{r}
+pca_variables <- tidy(pca_prepared, id = "pca_id", type = "coef")
+
+ggplot(pca_variables) +
+  geom_point(aes(x = value, y = terms, color = component))+
+  labs(color = NULL) +
+  geom_vline(xintercept=0) + 
+  geom_vline(xintercept=-0.2, linetype = 'dashed') + 
+  geom_vline(xintercept=0.2, linetype = 'dashed') + 
+  facet_wrap(~ component) +
+  theme_minimal()
+```
+
+The interpretation of some of the components are as follows based on the loading value of each variables on the prinicipal component. We used the criteria of loading greater than 0.2 and less than -0.2 to interpret the factors. The first factors based on the loading can be interpreted as physical activity and anthropometry, the second variable being anthropometry and the third variable maybe can be interpreted as sedentary lifestyle. Overall, given the lack of relationship evident from the correlation analysis, it is hard to interpret the factors.
+
+## Variance explained by principal components
+
+```{r}
+pca_variances <- tidy(pca_prepared, id = "pca_id", type = "variance")
+
+pca_variance <- pca_variances |> filter(terms == "percent variance")
+pca_variance$component <- as.factor(pca_variance$component)
+pca_variance$comp <- as.numeric(pca_variance$component)
+
+ggplot(pca_variance, aes(x = component, y = value, group = 1, color = component)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "Principal Components", y = "Variance explained (%)") +
+  theme_minimal()
+```
+
+The first component explains 20.53 percent of the variance, the second component explain 16.7 and the third component explain 10.7 percent of the variance. Using on the kaiser criterion ( based on the scree plot), I believe that getting three components out for the regression analysis would be better. However, a more robust approach will be to do parallel analysis and selecting the component based on that analysis (this is not done in this assignment).
+
+## Cummulative Variance
+
+```{r}
+pca_cummul_variance <- pca_variances |> filter(terms == "cumulative percent variance")
+pca_cummul_variance$component <- as.factor(pca_cummul_variance$component)
+pca_cummul_variance$comp <- as.numeric(pca_cummul_variance$component)
+
+ggplot(pca_cummul_variance, aes(x = component, y = value, group = 1, color = component)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "Principal Components", y = "Cummulative Variance explained (%)") +
+  theme_minimal()
+```
+
+The three component explain approximately 49 % of the variance in the dataset, which is not good, but for the sake of the practice, I will continue with the analysis.
+
+## Relationship between the components
+
+```{r}
+#excluding the categorical variables 
+pca_corr <- pca_baked |> 
+  select(-c(ID, SMK_CIG_STATUS, SDC_INCOME, SDC_GENDER))
+
+#creating a correlation matrix for the components
+pca_corr %>% 
+  correlate() %>%
+  rearrange() %>%
+  shave()  %>%
+  rplot(print_cor=TRUE)
+```
+
+As expected, none of the components are correlated with each other, showing that the assumption of independence of component is valid.
+
+# Regression analysis with PCA Components
+
+The initial analysis will be done without choosing the component. I believe R automatically choose the first five components for the analysis. After this, regression would be conducted with only three components and then the model will be compared based on their performance on the testing datasets.
+
+## Setting the seed and Splitting the data for training and testing the model
+
+```{r}
+set.seed(10)
+
+data_split <- initial_split(data_final, prop = 0.70)
+
+train_data <- training(data_split)
+summary(train_data$PM_BMI_SR)
+
+test_data  <- testing(data_split)
+summary(test_data$PM_BMI_SR)
+```
+As evident from the summary, five point summary and mean are close to each other for the dependent variable in training and testinf dataset.
+
+## Building the model
+
+```{r}
+linear_model <- linear_reg() %>%
+        set_engine("glm") %>%
+        set_mode("regression") 
+```
+
+## Recipe
+
+```{r}
+pca_reg_recipe <- recipe(PM_BMI_SR ~., data = train_data) %>%
+  update_role(ID, new_role = "id") %>%
+  step_scale(all_numeric_predictors()) %>%
+  step_center(all_numeric_predictors()) %>%
+  step_pca(all_numeric_predictors(),num_comp = 17, id = "pca_id")
+
+pca_reg_recipe
+```
+
+## Workflow
+
+```{r}
+bmi_workflow <- 
+        workflow() %>%
+        add_model(linear_model) %>% 
+        add_recipe(pca_reg_recipe)
+
+bmi_workflow
+```
+
+## Fit a Model
+
+```{r}
+bmi_fit <- 
+  bmi_workflow %>% 
+  fit(data = train_data)
+```
+
+```{r}
+bmi_fit_extract <- bmi_fit %>% 
+                    extract_fit_parsnip() %>% 
+                    tidy()
+bmi_fit_extract
+```
+
+All the principal components are negatively associated with BMI (dependent variable), except the component 4 which is positively associated. Gender and income are also negatively associated with the dependent variables, whereas smoking is positively associated.
+
+## Predict on new data
+
+```{r}
+bmi_predicted <- augment(bmi_fit, test_data)
+
+ggplot(bmi_predicted, aes(x = PM_BMI_SR, y = .pred)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  labs(x = "Measured BMI", y = "Predicted BMI") +
+  theme_minimal()
+```
+# Running the model with only three component based on the kaiser criterion
+
+## Recipe
+
+```{r}
+pca_reg_recipe2 <- recipe(PM_BMI_SR ~., data = train_data) %>%
+  update_role(ID, new_role = "id") %>%
+  step_scale(all_numeric_predictors()) %>%
+  step_center(all_numeric_predictors()) %>%
+  step_pca(all_numeric_predictors(),num_comp = 3, id = "pca_id")
+
+pca_reg_recipe2
+```
+
+## Workflow
+
+```{r}
+bmi_workflow2 <- 
+        workflow() %>%
+        add_model(linear_model) %>% 
+        add_recipe(pca_reg_recipe2)
+
+bmi_workflow2
+```
+
+## Fit a Model
+
+```{r}
+bmi_fit2 <- 
+  bmi_workflow2 %>% 
+  fit(data = train_data)
+```
+
+```{r}
+bmi_fit_extract2 <- bmi_fit2 %>% 
+                    extract_fit_parsnip() %>% 
+                    tidy()
+bmi_fit_extract2
+```
+
+## Predict on new data
+
+```{r}
+bmi_predicted2 <- augment(bmi_fit2, test_data)
+
+ggplot(bmi_predicted2, aes(x = PM_BMI_SR, y = .pred)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  labs(x = "Measured BMI", y = "Predicted BMI") +
+  theme_minimal()
+```
+
+Comparing the model performance (model with all components (model 1) vs model with only three components (model 2)) on testing data, both model perform poorly. However, the datapoints from model 1 graph (predicted vs measured) are more close to the line than the model 2 graph, which is expected given that model 1 contains all the components. The next approach of mine would be to use different component choosing methods present in the literature and then fit the model based on the decision of those methods and compare them to see which model performs better.
+
