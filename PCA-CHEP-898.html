@@ -590,7 +590,7 @@ display: none;
 <pre class="r"><code>install.packages(&quot;forestmodel&quot;,repos = &quot;https://cloud.r-project.org&quot;)</code></pre>
 <pre><code>## 
 ## The downloaded binary packages are in
-##  /var/folders/k5/8d811h2d4bl_qh__gl3pl0kh0000gn/T//RtmpZdByLm/downloaded_packages</code></pre>
+##  /var/folders/k5/8d811h2d4bl_qh__gl3pl0kh0000gn/T//RtmpXEzdBh/downloaded_packages</code></pre>
 </div>
 <div id="loading-the-libraries-and-importing-the-data" class="section level1">
 <h1>loading the libraries and importing the data</h1>
@@ -6205,6 +6205,23 @@ methods present in the literature and then fit the model based on the
 decision of those methods and compare them to see which model performs
 better.</p>
 </div>
+</div>
+<div id="limitations" class="section level1">
+<h1>Limitations:</h1>
+<ol style="list-style-type: decimal">
+<li>For the sake of assignments, I randomly choosed anthropometric and
+diet variables which may not be correlated as evident from the
+correlation analysis. In reality, the variables put in the PCA have
+issues of multicollinearity or they are related to each other.</li>
+<li>Parallel analysis is a more robust method to choose components for
+PCA, however I didn’t use that approach.</li>
+<li>Regression models were compared solely based on their performance on
+testing dataset. In reality, a more detailed evaluation of the linear
+model is needed, along with the assumption testing to see which model is
+the best model. This is not done in this assignment.</li>
+<li>The components due to lack of relationship between some of the
+variables are not interpretable.</li>
+</ol>
 </div>
 
 
