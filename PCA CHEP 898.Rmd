@@ -215,9 +215,9 @@ ggplot(pca_variables) +
   theme_minimal()
 ```
 
-The interpretation of some of the components are as follows based on the loading value of each variables on the principal component. We used the criteria of loading greater than 0.2 and less than -0.2 to interpret the factors. The first factors based on the loading can be interpreted as physical activity and anthropometric variables, the second variable being anthropometric and the third variable maybe can be interpreted as sedentary lifestyle. Overall, given the lack of relationship evident from the correlation analysis, it is hard to interpret the factors.
+Interpretation: The interpretation of some of the components are as follows based on the loading value of each variables on the principal component. We used the criteria of loading greater than 0.2 and less than -0.2 to interpret the factors. The first factors based on the loading can be interpreted as physical activity, the second variable being anthropometric, the third variable can be interpreted as sitting and walk time and fourth component is fruits and vegetable quantity. All other components are hard to interpret.
 
-## Variance explained by principal components
+## Variance explained by principal components and selecting the components
 
 ```{r}
 pca_variances <- tidy(pca_prepared, id = "pca_id", type = "variance")
@@ -233,7 +233,7 @@ ggplot(pca_variance, aes(x = component, y = value, group = 1, color = component)
   theme_minimal()
 ```
 
-The first component explains 20.53 percent of the variance, the second component explain 16.7 and the third component explain 10.7 percent of the variance. Using on the kaiser criterion ( based on the scree plot), I believe that getting three components out for the regression analysis would be better. However, a more robust approach will be to do parallel analysis and selecting the component based on that analysis (this is not done in this assignment).
+The first component explains 20.53 percent of the variance, the second component explain 16.7 and the third component explain 10.7 percent of the variance. Using on the kaiser criterion ( based on the scree plot) or elbow method, I believe that getting three components out for the regression analysis would be better. However, a more robust approach will be to do parallel analysis and selecting the component based on that analysis (this is not done in this assignment).
 
 ## Cummulative Variance
 
@@ -249,7 +249,7 @@ ggplot(pca_cummul_variance, aes(x = component, y = value, group = 1, color = com
   theme_minimal()
 ```
 
-The three component explain approximately 49 % of the variance in the data set, which is not good, but for the sake of the practice, I will continue with the analysis.
+The three component (extracted using the elbow method) explain approximately 49 % of the variance in the data set, which is not good, but for the sake of the practice, I will continue with the analysis.
 
 ## Relationship between the components
 
@@ -270,7 +270,7 @@ As expected, none of the components are correlated with each other, showing that
 
 # Regression analysis with PCA Components
 
-The initial regression analysis will be done without choosing the component. After that, regression would be conducted with only three components and then the model will be compared based on their performance on the testing dataset (only graphically).
+The initial regression analysis will be done without choosing the component. After that, regression would be conducted with only three components (tuned model) and then the model will be compared based on their performance on the testing dataset. Models will also be compared based on residuals analysis.
 
 ## Setting the seed and Splitting the data for training and testing the model
 
@@ -333,7 +333,7 @@ bmi_fit_extract <- bmi_fit %>%
 bmi_fit_extract
 ```
 
-None of categorical variables were statistically significant, however, many principal components were found to be statistically associated with dependent variables with some having positive association and other having negative association. To truly define the relationship, it is imperative to interpret the factors first to make sense of the relationships observed in this regression analysis.
+Interpretation: None of categorical variables were statistically significant, however, many principal components were found to be statistically associated with dependent variables with some having positive association and other having negative association. To truly define the relationship, it is imperative to interpret the factors first to make sense of the relationships observed in this regression analysis. however, I was only able to interpret the first few components. The first component which was interpreted as physical activity tell us that given a unit increase in this component, the dependent variable will decrease by 0.619 units. The second component which was interpreted as anthropometric component tell us that given a unit increase in anthropometric component, the dependent variable will decrease by 2.375 units. The third component which was interpreted as sitting and walk time tell us that given a unit increase in this component, the dependent variable will decrease by 0.409 units. The fourth component which is fruits and vegetable quantity is positively associated with dependent variable, which tell us that given a unit increase in fruit and vegetable quantity, the dependent variable will increase by 0.529 units.
 
 ## Prediction on testing data
 
@@ -386,7 +386,7 @@ bmi_fit_extract2 <- bmi_fit2 %>%
 bmi_fit_extract2
 ```
 
-None of the categorical variables was found to be associated with dependent variable (all P>0.05). However, all the principal components were statistically significant and showed negative association with the dependent variable.
+Interpretation: None of the categorical variables was found to be associated with dependent variable (all P>0.05). However, all the principal components were statistically significant and showed negative association with the dependent variable. The first component which was interpreted as physical activity tell us that given a unit increase in this component, the dependent variable will decrease by 0.641 units. The second component which was interpreted as anthropometric component tell us that given a unit increase in anthropometric component, the dependent variable will decrease by 2.431 units. The third component which was interpreted as sitting and walk time tell us that given a unit increase in this component, the dependent variable will decrease by 0.403 units.
 
 ## Prediction on testing data
 
@@ -401,6 +401,42 @@ ggplot(bmi_predicted2, aes(x = PM_BMI_SR, y = .pred)) +
 ```
 
 Comparing the model performance (model with all components (model 1) vs model with only three components (model 2)) on testing data, both model perform poorly. However, the data points from model 1 graph (predicted vs measured) are more close to the line than the model 2 graph, which is expected given that model 1 contains all the components. The next approach of mine would be to use different component choosing methods present in the literature and then fit the model based on the decision of those methods and compare them to see which model performs better.
+
+# Model Diagnostics
+
+```{r}
+## linear regression model using all components
+bmi_fit |> 
+  extract_fit_engine() |> 
+  check_model()
+```
+
+Based on the residual plots, I believe that the assumption of linearity, homoscdesticity and normality of residuals are violated, which put questions on the inference based on this model.
+
+```{r}
+## linear regression model using only three components
+bmi_fit2 |> 
+  extract_fit_engine() |> 
+  check_model()
+```
+
+Based on the residual plots, I believe that the assumption of linearity, homoscdesticity and normality of residuals are violated, which put questions on the inference based on this model.
+
+Based on the residual analysis, both model seems to violate the assumptions underlying the linear model and therefore we will continue with RMSE analysis to select the best model
+
+```{r}
+# Linear model with all components
+rmse_test<- yardstick::rmse(data=bmi_predicted, truth = PM_BMI_SR,
+         estimate = .pred)
+rmse_test
+
+# Linear model with only three components
+rmse_test2<- yardstick::rmse(data=bmi_predicted2, truth = PM_BMI_SR,
+         estimate = .pred)
+rmse_test2
+```
+
+Best Model: The RMSE for the linear PCA model with all components is less than the RMSE of the linear model with only three components.Therefore, I believe that the regression model with all the components is a better model.
 
 # Limitations:
 1. For the sake of assignments, I randomly choosed anthropometric and diet variables which may not be correlated as evident from the correlation analysis. In reality, the variables put in the PCA have issues of multicollinearity or they are related to each other.
