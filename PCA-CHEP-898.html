@@ -581,8 +581,8 @@ display: none;
 </div>
 
 
-<div id="repositories-link" class="section level1">
-<h1>Repositories link</h1>
+<div id="repository-link" class="section level1">
+<h1>Repository link</h1>
 <p><a href="https://github.com/harsimranghai91-eng/Principal-Component-Analysis-CHEP-898.git" class="uri">https://github.com/harsimranghai91-eng/Principal-Component-Analysis-CHEP-898.git</a></p>
 </div>
 <div id="installing-the-libraries" class="section level1">
@@ -590,7 +590,7 @@ display: none;
 <pre class="r"><code>install.packages(&quot;forestmodel&quot;,repos = &quot;https://cloud.r-project.org&quot;)</code></pre>
 <pre><code>## 
 ## The downloaded binary packages are in
-##  /var/folders/k5/8d811h2d4bl_qh__gl3pl0kh0000gn/T//RtmpXEzdBh/downloaded_packages</code></pre>
+##  /var/folders/k5/8d811h2d4bl_qh__gl3pl0kh0000gn/T//RtmptfCsJF/downloaded_packages</code></pre>
 </div>
 <div id="loading-the-libraries-and-importing-the-data" class="section level1">
 <h1>loading the libraries and importing the data</h1>
@@ -6090,10 +6090,12 @@ bmi_fit_extract</code></pre>
 ##  9 SDC_INCOME8      -0.519     0.416    -1.25   0.212   
 ## 10 SMK_CIG_STATUS1   0.108     0.0881    1.22   0.221   
 ## # ℹ 18 more rows</code></pre>
-<p>All the principal components are negatively associated with BMI
-(dependent variable), except the component 4 which is positively
-associated. Gender and income are also negatively associated with the
-dependent variables, whereas smoking is positively associated.</p>
+<p>None of categorical variables were statistically significant,
+however, many principal components were found to be statistically
+associated with dependent variables with some having positive
+association and other having negative association. To truly define the
+relationship, it is imperative to interpret the factors first to make
+sense of the relationships observed in this regression analysis.</p>
 </div>
 <div id="prediction-on-testing-data" class="section level2">
 <h2>Prediction on testing data</h2>
@@ -6183,6 +6185,10 @@ bmi_fit_extract2</code></pre>
 ## 13 PC1               -0.641    0.0259   -24.7   1.88e-130
 ## 14 PC2               -2.43     0.0324   -75.1   0        
 ## 15 PC3               -0.404    0.0356   -11.3   1.38e- 29</code></pre>
+<p>None of the categorical variables was found to be associated with
+dependent variable (all P&gt;0.05). However, all the principal
+components were statistically significant and showed negative
+association with the dependent variable.</p>
 </div>
 <div id="prediction-on-testing-data-1" class="section level2">
 <h2>Prediction on testing data</h2>
@@ -6221,6 +6227,8 @@ model is needed, along with the assumption testing to see which model is
 the best model. This is not done in this assignment.</li>
 <li>The components due to lack of relationship between some of the
 variables are not interpretable.</li>
+<li>we didn’t use the rotation, it is possible that principal components
+will be more interpretable, if we use rotation techniques.</li>
 </ol>
 </div>
 

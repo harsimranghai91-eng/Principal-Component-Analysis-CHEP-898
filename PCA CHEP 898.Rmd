@@ -5,7 +5,7 @@ date: "2026-02-20"
 output: html_document
 ---
 
-# Repositories link
+# Repository link
 https://github.com/harsimranghai91-eng/Principal-Component-Analysis-CHEP-898.git
 
 # Installing the libraries
@@ -333,7 +333,7 @@ bmi_fit_extract <- bmi_fit %>%
 bmi_fit_extract
 ```
 
-
+None of categorical variables were statistically significant, however, many principal components were found to be statistically associated with dependent variables with some having positive association and other having negative association. To truly define the relationship, it is imperative to interpret the factors first to make sense of the relationships observed in this regression analysis.
 
 ## Prediction on testing data
 
@@ -386,6 +386,8 @@ bmi_fit_extract2 <- bmi_fit2 %>%
 bmi_fit_extract2
 ```
 
+None of the categorical variables was found to be associated with dependent variable (all P>0.05). However, all the principal components were statistically significant and showed negative association with the dependent variable.
+
 ## Prediction on testing data
 
 ```{r}
@@ -405,4 +407,5 @@ Comparing the model performance (model with all components (model 1) vs model wi
 2. Parallel analysis is a more robust method to choose components for PCA, however I didn't use that approach.
 3. Regression models were compared solely based on their performance on testing dataset. In reality, a more detailed evaluation of the linear model is needed, along with the assumption testing to see which model is the best model. This is not done in this assignment.
 4. The components due to lack of relationship between some of the variables are not interpretable.
+5. we didn't use the rotation, it is possible that principal components will be more interpretable, if we use rotation techniques.
 
